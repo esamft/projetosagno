@@ -6,7 +6,8 @@
 
 **Características:**
 - ✅ Agente Orquestrador para roteamento inteligente
-- ✅ Classificação automática de intenção (finance/productivity/general)
+- ✅ Classificação automática de intenção (finance/productivity/investment/general/ask_user)
+- ✅ Sistema de clarificação (ask_user) para mensagens ambíguas
 - ✅ Arquitetura modular e escalável
 - ✅ Fallback robusto baseado em palavras-chave
 - ✅ Logging completo de fluxo de roteamento
@@ -31,6 +32,16 @@
 - ✅ Sistema de proteção contra sobrecarga
 - ✅ 4 contextos: Trabalho, Pessoal, Estudo, Saúde
 - ✅ Visão diária e semanal de carga
+
+### **4. Life OS Investment Agent** - Gestor de Patrimônio (Wealth Manager)
+
+**Características:**
+- ✅ Tom profissional, analítico e objetivo (matemático, sem especulação)
+- ✅ Gestão de patrimônio por Buckets (Classes Macro)
+- ✅ Double-Layer Rebalancing (Macro → Micro)
+- ✅ Atualização de saldos (manual e automático)
+- ✅ Oráculo de aportes baseado em gaps de alocação
+- ✅ Consulta de patrimônio com status de desbalanceamento
 
 ---
 
@@ -76,6 +87,17 @@ agents/productivity_agent.py
 - Integrado ao sistema multi-agente
 ```
 
+#### Versão 4: Life OS Investment Agent (Wealth Manager)
+```
+agents/investment_agent.py
+- Tom profissional/gestor matemático
+- Gestão de patrimônio por Buckets
+- Double-Layer Rebalancing
+- Atualização de saldos e cotações
+- Oráculo de aportes
+- Integrado ao sistema multi-agente
+```
+
 ### **Ferramentas:**
 
 #### Cost Manager (Original)
@@ -98,6 +120,13 @@ tools/productivity_manager.py
 - update_task_status() - Atualiza status
 - schedule_task() - Agenda tarefa
 - get_weekly_overview() - Visão semanal
+
+tools/investment_manager.py
+- update_asset_balance() - Atualizar saldo manual
+- get_portfolio_summary() - Resumo de patrimônio
+- calculate_rebalancing() - Oráculo de aportes
+- update_asset_price() - Atualizar cotação
+- get_asset_details() - Detalhes de ativos
 ```
 
 #### Multimodal (Voz e Imagem)
@@ -123,18 +152,19 @@ evolution_integration.py      # Integração Evolution API
 setup_evolution.sh            # Instalação automática Evolution
 ```
 
-### **Documentação (120KB+ total):**
+### **Documentação (153KB+ total):**
 ```
 MULTI_AGENT_SYSTEM.md         # Sistema multi-agente (20KB)
 LIFEOS_AGENT.md               # Finance Agent (20KB)
 PRODUCTIVITY_AGENT.md         # Productivity Agent (15KB)
+INVESTMENT_AGENT.md           # Investment Agent (18KB) ✨ NOVO
 SETUP_EVOLUTION_API.md        # Setup Evolution (20KB)
 MULTIMODAL_SUPPORT.md         # Voz e imagens (17KB)
 INTEGRATION_GUIDE.md          # Guias de integração (15KB)
 COST_AGENT.md                 # Agente original (14KB)
 STATUS_INSTALACAO.md          # Status atual (8KB)
 QUICK_START_COST_AGENT.md     # Início rápido (3KB)
-RESUMO_FINAL.md               # Este arquivo (18KB)
+RESUMO_FINAL.md               # Este arquivo (20KB)
 ```
 
 ---
@@ -431,13 +461,15 @@ python evolution_integration.py
 | **Orquestrador (Router)** | ✅ Implementado |
 | **Finance Agent** | ✅ Completo + Integrado |
 | **Productivity Agent** | ✅ Completo + Integrado |
+| **Investment Agent** | ✅ Completo + Integrado ✨ |
+| **Sistema ask_user** | ✅ Implementado ✨ |
 | **Agente Original** | ✅ Completo |
-| **Ferramentas** | ✅ 16 tools criadas |
+| **Ferramentas** | ✅ 21 tools criadas (3 + 6 + 5 + 7) |
 | **Multimodal** | ✅ Voz + Imagem |
-| **Integração WhatsApp** | ✅ Evolution/Twilio/Baileys |
-| **Documentação** | ✅ 120KB+ (9 guias) |
+| **Integração WhatsApp** | ✅ Evolution/Twilio/Baileys (Cost Agent) |
+| **Documentação** | ✅ 153KB+ (10 guias) |
 | **Testes** | ✅ Automatizados + Interativos |
-| **Painel Backend** | ✅ APIs prontas |
+| **Painel Backend** | ✅ APIs prontas (Finance + Productivity + Investment) |
 
 ---
 
@@ -493,6 +525,7 @@ nano data/budgets.json
 ### **Agentes:**
 - `LIFEOS_AGENT.md` - Life OS Financial Agent completo (20KB)
 - `PRODUCTIVITY_AGENT.md` - Life OS Productivity Agent completo (15KB)
+- `INVESTMENT_AGENT.md` - Life OS Investment Agent completo (18KB)
 - `COST_AGENT.md` - Agente original (14KB)
 
 ### **Recursos:**
@@ -537,22 +570,25 @@ TOTAL: ~$0.044/mês
 
 ### **✨ Inovações:**
 - **Sistema Multi-Agente com Orquestrador** - arquitetura escalável e modular
-- **2 Agentes Especializados Ativos** - Finance + Productivity totalmente integrados
+- **3 Agentes Especializados Ativos** - Finance + Productivity + Investment totalmente integrados
+- **Sistema de Clarificação (ask_user)** - orquestrador pede detalhes quando mensagem é ambígua
 - Sistema de parcelamento único com análise de futuro (Finance)
 - Sistema de Deep Work com Pomodoros (Productivity)
-- Roteamento inteligente automático (finance/productivity/general)
+- Double-Layer Rebalancing para investimentos (Investment)
+- Roteamento inteligente automático (5 intents: finance/productivity/investment/general/ask_user)
 - Previsão de compromissos futuros ("já devendo")
 - Proteção contra sobrecarga de tempo (alertas automáticos)
-- Tom profissional diferenciado (auditor financeiro + guardião do foco)
-- Formato de resposta padronizado em ambos agentes
+- Oráculo de aportes baseado em gaps de alocação (Investment)
+- Tom profissional diferenciado (auditor financeiro + guardião do foco + gestor matemático)
+- Formato de resposta padronizado em todos os agentes
 
 ### **🎯 Qualidade:**
-- Documentação de 120KB+ (9 guias completos)
-- 16 ferramentas especializadas (Finance + Productivity)
+- Documentação de 153KB+ (10 guias completos)
+- 21 ferramentas especializadas (Finance + Productivity + Investment)
 - 4 versões de agente (flexibilidade total)
 - Suporte multimodal completo (texto/voz/imagem)
 - Fallback robusto em todos os componentes
-- 2 agentes com tons de voz únicos e bem definidos
+- 3 agentes com tons de voz únicos e bem definidos
 
 ### **🚀 Produção:**
 - Sistema multi-agente totalmente funcional
@@ -567,22 +603,28 @@ TOTAL: ~$0.044/mês
 ## ✅ **Checklist de Entrega**
 
 - [x] Sistema Multi-Agente com Orquestrador
-- [x] Agente Orquestrador (Router) implementado
+- [x] Agente Orquestrador (Router) implementado com 5 intents
+- [x] Sistema de Clarificação (ask_user) para mensagens ambíguas
 - [x] Finance Agent integrado ao sistema
 - [x] Productivity Agent integrado ao sistema
-- [x] Roteamento automático funcional
+- [x] Investment Agent integrado ao sistema
+- [x] Roteamento automático funcional (finance/productivity/investment/general/ask_user)
 - [x] Agente original funcionando
 - [x] Life OS Finance Agent implementado
 - [x] Life OS Productivity Agent implementado
+- [x] Life OS Investment Agent implementado
 - [x] Suporte a parcelamento (Finance)
 - [x] Sistema de orçamento com alertas (Finance)
 - [x] Previsão de futuro (Finance)
 - [x] Sistema de Deep Work e Pomodoros (Productivity)
 - [x] Proteção contra sobrecarga (Productivity)
+- [x] Double-Layer Rebalancing (Investment)
+- [x] Oráculo de aportes (Investment)
+- [x] Gestão de patrimônio por Buckets e Assets (Investment)
 - [x] Suporte multimodal (voz + imagem)
 - [x] Integração WhatsApp (3 opções)
-- [x] APIs para painel (Finance + Productivity)
-- [x] Documentação completa (120KB+)
+- [x] APIs para painel (Finance + Productivity + Investment)
+- [x] Documentação completa (153KB+)
 - [x] Testes automatizados para todos os agentes
 - [x] Scripts de demonstração (multi-agente + isolados)
 
@@ -602,6 +644,9 @@ TOTAL: ~$0.044/mês
 9. b371d05 - Sistema Multi-Agente com Orquestrador
 10. bf1b4d5 - Atualiza RESUMO_FINAL.md com sistema multi-agente
 11. 47d64c1 - Productivity Agent - Guardião do Foco e Deep Work
+12. 74cd7b7 - Atualiza RESUMO_FINAL.md com Productivity Agent
+13. 452140b - Investment Agent - Gestor de Patrimônio (Wealth Manager)
+14. f479755 - Sistema de Clarificação (ask_user) ao Orquestrador
 ```
 
 **Branch:** `claude/whatsapp-cost-agent-Jmu1l`
@@ -610,22 +655,24 @@ TOTAL: ~$0.044/mês
 
 ## 🎉 **Projeto Concluído**
 
-**Total de Arquivos Criados:** 35+
-**Linhas de Código:** 7.500+
-**Documentação:** 120KB+ (9 guias)
-**Commits:** 11
+**Total de Arquivos Criados:** 38+
+**Linhas de Código:** 9.000+
+**Documentação:** 153KB+ (10 guias)
+**Commits:** 14
 **Branch:** `claude/whatsapp-cost-agent-Jmu1l` (atualizada)
 
 **Sistema Multi-Agente Completo:**
-✅ Orquestrador inteligente funcional
+✅ Orquestrador inteligente funcional com sistema de clarificação
 ✅ Finance Agent totalmente integrado
 ✅ Productivity Agent totalmente integrado
-✅ Roteamento automático por intenção (3 rotas)
+✅ Investment Agent totalmente integrado
+✅ Roteamento automático por intenção (5 intents)
+✅ Sistema ask_user para mensagens ambíguas
 ✅ Fallback robusto
-✅ 16 ferramentas especializadas
+✅ 21 ferramentas especializadas
 ✅ Estrutura pronta para novos agentes
 
-**Dois Agentes Especializados Ativos:**
+**Três Agentes Especializados Ativos:**
 💰 **Finance Agent** - Auditor Financeiro
   - Parcelamento, orçamento, previsão de futuro
   - Tom profissional e analítico
@@ -634,10 +681,14 @@ TOTAL: ~$0.044/mês
   - Deep Work, Pomodoros, proteção de tempo
   - Tom estoico e essencialista
 
+💎 **Investment Agent** - Gestor de Patrimônio
+  - Double-Layer Rebalancing, oráculo de aportes
+  - Tom profissional, matemático e objetivo
+
 **Tudo pronto para:**
 ✅ Uso local (com API key)
 ✅ Integração WhatsApp (Evolution/Twilio/Baileys)
-✅ Desenvolvimento de painel (2 conjuntos de APIs)
+✅ Desenvolvimento de painel (3 conjuntos de APIs: Finance + Productivity + Investment)
 ✅ Produção em escala
 ✅ Expansão com novos agentes especializados
 
