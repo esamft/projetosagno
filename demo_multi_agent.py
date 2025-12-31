@@ -49,6 +49,11 @@ def demo_automatic():
         "💬 Conversa Geral": [
             "Oi, tudo bem?",
             "Obrigado pela ajuda!",
+        ],
+        "❓ Mensagens Ambíguas (deve pedir clarificação)": [
+            "Quanto eu tenho?",
+            "Atualiza meu saldo",
+            "Posso comprar?",
         ]
     }
 

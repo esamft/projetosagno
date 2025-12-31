@@ -118,6 +118,17 @@ class LifeOSRouter:
                         "response": response.content
                     }
 
+            elif intent == "ask_user":
+                # Orquestrador está em dúvida e quer perguntar
+                logger.info("❓ Mensagem ambígua - pedindo clarificação")
+                question = classification.get("question", "Pode especificar melhor o que você precisa?")
+                return {
+                    "agent_used": "ask_user",
+                    "intent": intent,
+                    "reasoning": reasoning,
+                    "response": self._ask_clarification(message, question)
+                }
+
             elif intent == "general_chat":
                 logger.info("💬 Resposta genérica")
                 return {
@@ -181,6 +192,16 @@ class LifeOSRouter:
             'cotação', 'bolsa', 'b3'
         ]
 
+        # Palavras vagas que indicam ambiguidade
+        ambiguous_keywords = [
+            'quanto eu tenho', 'tenho quanto', 'meu saldo', 'atualiza', 'posso comprar'
+        ]
+
+        # Verificar se é ambíguo
+        if any(keyword in message_lower for keyword in ambiguous_keywords):
+            # Sem contexto suficiente para decidir
+            return "ask_user"
+
         # Verificar investimentos (prioridade 1)
         if any(keyword in message_lower for keyword in investment_keywords):
             return "investment_agent"
@@ -195,6 +216,28 @@ class LifeOSRouter:
 
         # Padrão: general chat
         return "general_chat"
+
+    def _ask_clarification(self, original_message: str, question: str) -> str:
+        """
+        Pede clarificação ao usuário quando há ambiguidade
+
+        Args:
+            original_message: Mensagem original do usuário
+            question: Pergunta de clarificação gerada pelo orquestrador
+
+        Returns:
+            Mensagem pedindo clarificação
+        """
+        return f"""❓ **Preciso de mais detalhes:**
+
+{question}
+
+**Opções:**
+💰 **Finanças** - Gastos do dia a dia, compras, contas
+📋 **Produtividade** - Tarefas, agenda, compromissos
+💎 **Investimentos** - Patrimônio, aportes, carteira
+
+Por favor, especifique melhor o que você precisa."""
 
     def _general_response(self, message: str) -> str:
         """
