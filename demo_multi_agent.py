@@ -37,10 +37,10 @@ def demo_automatic():
             "Quanto gastei esse mês?",
             "Posso fazer uma compra parcelada no próximo mês?",
         ],
-        "📋 Produtividade (Em Breve)": [
+        "📋 Produtividade": [
             "Preciso estudar matemática hoje",
-            "Me lembra de ligar pro médico às 15h",
-            "Quais minhas tarefas de hoje?",
+            "Me lembra de ligar pro médico",
+            "O que tenho para hoje?",
         ],
         "💬 Conversa Geral": [
             "Oi, tudo bem?",

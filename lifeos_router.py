@@ -9,6 +9,7 @@ from loguru import logger
 
 from agents.orchestrator_agent import create_orchestrator_agent
 from agents.lifeos_financial_agent import create_lifeos_financial_agent
+from agents.productivity_agent import create_productivity_agent
 
 
 class LifeOSRouter:
@@ -33,7 +34,7 @@ class LifeOSRouter:
         # Criar agentes especializados
         self.agents = {
             "finance_agent": create_lifeos_financial_agent(),
-            # "productivity_agent": create_productivity_agent(),  # TODO: Implementar
+            "productivity_agent": create_productivity_agent(),
             # Outros agentes podem ser adicionados aqui
         }
         logger.info(f"✅ {len(self.agents)} agente(s) especializado(s) carregado(s)")
@@ -92,14 +93,16 @@ class LifeOSRouter:
                     }
 
             elif intent == "productivity_agent":
-                # TODO: Implementar productivity agent
-                logger.warning("⚠️ Productivity Agent ainda não implementado")
-                return {
-                    "agent_used": "productivity_agent",
-                    "intent": intent,
-                    "reasoning": reasoning,
-                    "response": "🚧 O agente de produtividade ainda está em desenvolvimento. Em breve estará disponível!"
-                }
+                agent = self.agents.get("productivity_agent")
+                if agent:
+                    logger.info("📋 Roteando para Productivity Agent...")
+                    response = agent.run(message)
+                    return {
+                        "agent_used": "productivity_agent",
+                        "intent": intent,
+                        "reasoning": reasoning,
+                        "response": response.content
+                    }
 
             elif intent == "general_chat":
                 logger.info("💬 Resposta genérica")

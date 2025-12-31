@@ -73,18 +73,20 @@ gastar, comprar, pagar, R$, reais, dinheiro, preço, pix, cartão, orçamento
 
 ---
 
-#### **Productivity Agent** 🚧 Em Desenvolvimento
+#### **Productivity Agent** ✅ Implementado
 
-**Arquivo:** `agents/productivity_agent.py` (TODO)
+**Arquivo:** `agents/productivity_agent.py`
 
-**Será acionado quando:**
+**Acionado quando:**
 - Tarefas, compromissos, lembretes
 - Trabalho, estudos, projetos
 - Gestão de tempo, prazos
 - Pomodoros, Deep Work
 
 **Palavras-chave:**
-tarefa, fazer, trabalho, estudar, reunião, lembrar, prazo
+tarefa, fazer, trabalho, estudar, reunião, lembrar, prazo, agenda, inbox
+
+**Modelo:** `gpt-4o`
 
 ---
 
@@ -210,12 +212,11 @@ print(f"Resposta: {result['response']}")
 | "Gastei 50 no almoço" | `finance_agent` | Finance | Gasto + valor |
 | "Quanto gastei esse mês?" | `finance_agent` | Finance | Consulta financeira |
 | "Posso comprar iPhone 3000?" | `finance_agent` | Finance | Decisão de compra |
-| "Preciso estudar matemática" | `productivity_agent` | Productivity* | Tarefa/ação |
-| "Me lembra de ligar" | `productivity_agent` | Productivity* | Lembrete |
+| "Preciso estudar matemática" | `productivity_agent` | Productivity | Tarefa/ação |
+| "Me lembra de ligar" | `productivity_agent` | Productivity | Lembrete |
+| "O que tenho para hoje?" | `productivity_agent` | Productivity | Consulta de agenda |
 | "Oi, tudo bem?" | `general_chat` | General | Saudação |
 | "Obrigado!" | `general_chat` | General | Agradecimento |
-
-\* *Em desenvolvimento*
 
 ---
 
@@ -427,9 +428,10 @@ O sistema loga **todo o fluxo** de roteamento:
 ## 🚧 Roadmap
 
 ### Curto Prazo:
-- [ ] Implementar Productivity Agent
+- [x] Implementar Productivity Agent
 - [ ] Adicionar métricas de acurácia do router
 - [ ] Dashboard de uso por agente
+- [ ] Integração com calendário (Productivity)
 
 ### Médio Prazo:
 - [ ] Health & Wellness Agent
@@ -498,7 +500,7 @@ projetosagno/
 |-----------|--------|
 | Orquestrador | ✅ Implementado |
 | Finance Agent | ✅ Implementado |
-| Productivity Agent | 🚧 TODO |
+| Productivity Agent | ✅ Implementado |
 | Router System | ✅ Implementado |
 | Testes | ✅ Funcionando |
 | Documentação | ✅ Completa |
