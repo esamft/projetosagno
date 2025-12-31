@@ -12,6 +12,9 @@ from tools.tc_analyzer import analyze_terms_and_conditions, format_comparative_t
 from tools.cost_manager import add_cost, list_costs, get_categories_summary, delete_cost
 from tools.cost_reports import generate_monthly_report, get_expense_trends, export_to_dashboard_json
 
+# Life OS tools
+from tools.lifeos_cost_manager import add_transaction, get_month_summary, get_future_commitments
+
 __all__ = [
     # Example
     'example_tool',
@@ -28,4 +31,8 @@ __all__ = [
     'generate_monthly_report',
     'get_expense_trends',
     'export_to_dashboard_json',
+    # Life OS
+    'add_transaction',
+    'get_month_summary',
+    'get_future_commitments',
 ]
