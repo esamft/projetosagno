@@ -30,3 +30,10 @@ knowledge/*.json
 # Data files (costs, user data)
 data/*.json
 !data/.gitkeep
+
+# Evolution API installation directory (external repo)
+evolution-api-install/
+
+# Temporary files
+temp/
+*.tmp
