@@ -198,8 +198,7 @@ def create_lifeos_financial_agent() -> Agent:
         ],
 
         markdown=True,
-        debug_mode=False,
-        show_tool_calls=True
+        debug_mode=False
     )
 
     logger.info(f"✅ {agent.name} criado com sucesso")
