@@ -16,3 +16,8 @@ aiohttp>=3.9.0
 # Web scraping (opcional)
 # playwright>=1.40.0
 # httpx>=0.25.0
+
+# Multimodal support (áudio/imagem)
+Pillow>=10.0.0          # Processamento de imagens
+requests>=2.31.0        # Download de arquivos
+flask>=3.0.0            # Webhook server (opcional)
