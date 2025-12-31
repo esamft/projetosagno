@@ -10,6 +10,7 @@ from loguru import logger
 from agents.orchestrator_agent import create_orchestrator_agent
 from agents.lifeos_financial_agent import create_lifeos_financial_agent
 from agents.productivity_agent import create_productivity_agent
+from agents.investment_agent import create_investment_agent
 
 
 class LifeOSRouter:
@@ -35,6 +36,7 @@ class LifeOSRouter:
         self.agents = {
             "finance_agent": create_lifeos_financial_agent(),
             "productivity_agent": create_productivity_agent(),
+            "investment_agent": create_investment_agent(),
             # Outros agentes podem ser adicionados aqui
         }
         logger.info(f"✅ {len(self.agents)} agente(s) especializado(s) carregado(s)")
@@ -104,6 +106,18 @@ class LifeOSRouter:
                         "response": response.content
                     }
 
+            elif intent == "investment_agent":
+                agent = self.agents.get("investment_agent")
+                if agent:
+                    logger.info("💰 Roteando para Investment Agent...")
+                    response = agent.run(message)
+                    return {
+                        "agent_used": "investment_agent",
+                        "intent": intent,
+                        "reasoning": reasoning,
+                        "response": response.content
+                    }
+
             elif intent == "general_chat":
                 logger.info("💬 Resposta genérica")
                 return {
@@ -158,11 +172,24 @@ class LifeOSRouter:
             'compromisso', 'pomodoro', 'foco'
         ]
 
-        # Verificar financeiro
+        # Palavras-chave de investimentos
+        investment_keywords = [
+            'investir', 'investimento', 'patrimônio', 'carteira', 'aportar', 'aporte',
+            'ações', 'ação', 'tesouro', 'renda fixa', 'cripto', 'bitcoin', 'btc',
+            'petr4', 'vale3', 'wege3', 'ipca', 'cdb', 'fundo', 'fundos',
+            'rebalancear', 'rebalanceamento', 'alocação', 'rentabilidade',
+            'cotação', 'bolsa', 'b3'
+        ]
+
+        # Verificar investimentos (prioridade 1)
+        if any(keyword in message_lower for keyword in investment_keywords):
+            return "investment_agent"
+
+        # Verificar financeiro (prioridade 2)
         if any(keyword in message_lower for keyword in finance_keywords):
             return "finance_agent"
 
-        # Verificar produtividade
+        # Verificar produtividade (prioridade 3)
         if any(keyword in message_lower for keyword in productivity_keywords):
             return "productivity_agent"
 
@@ -183,7 +210,7 @@ class LifeOSRouter:
 
         # Saudações
         if any(word in message_lower for word in ['oi', 'olá', 'ola', 'hey', 'bom dia', 'boa tarde', 'boa noite']):
-            return "👋 Olá! Sou seu assistente Life OS. Posso ajudar com:\n\n💰 **Finanças**: Registrar gastos, consultar orçamento\n📋 **Produtividade**: Gerenciar tarefas (em breve)\n\nComo posso ajudar?"
+            return "👋 Olá! Sou seu assistente Life OS. Posso ajudar com:\n\n💰 **Finanças**: Registrar gastos, consultar orçamento\n📋 **Produtividade**: Gerenciar tarefas e tempo\n💎 **Investimentos**: Gestão de patrimônio e aportes\n\nComo posso ajudar?"
 
         # Agradecimentos
         if any(word in message_lower for word in ['obrigado', 'obrigada', 'valeu', 'thanks']):

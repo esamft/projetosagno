@@ -22,6 +22,13 @@ from tools.productivity_manager import (
     schedule_task,
     get_weekly_overview
 )
+from tools.investment_manager import (
+    update_asset_balance,
+    get_portfolio_summary,
+    calculate_rebalancing,
+    update_asset_price,
+    get_asset_details
+)
 
 __all__ = [
     # Example
@@ -50,4 +57,10 @@ __all__ = [
     'update_task_status',
     'schedule_task',
     'get_weekly_overview',
+    # Life OS - Investments
+    'update_asset_balance',
+    'get_portfolio_summary',
+    'calculate_rebalancing',
+    'update_asset_price',
+    'get_asset_details',
 ]

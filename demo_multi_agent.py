@@ -35,17 +35,20 @@ def demo_automatic():
             "Gastei 50 reais no almoço no pix",
             "Comprei um notebook de 2400 em 12x no crédito",
             "Quanto gastei esse mês?",
-            "Posso fazer uma compra parcelada no próximo mês?",
         ],
         "📋 Produtividade": [
             "Preciso estudar matemática hoje",
             "Me lembra de ligar pro médico",
             "O que tenho para hoje?",
         ],
+        "💎 Investimentos": [
+            "Tenho 5 mil para investir, onde coloco?",
+            "Quanto eu tenho de patrimônio?",
+            "Atualize meu Tesouro IPCA+ para 50 mil",
+        ],
         "💬 Conversa Geral": [
             "Oi, tudo bem?",
             "Obrigado pela ajuda!",
-            "Como você funciona?",
         ]
     }
 

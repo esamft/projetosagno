@@ -7,6 +7,7 @@ from agents.cost_agent import create_cost_management_agent
 from agents.lifeos_financial_agent import create_lifeos_financial_agent
 from agents.orchestrator_agent import create_orchestrator_agent
 from agents.productivity_agent import create_productivity_agent
+from agents.investment_agent import create_investment_agent
 
 __all__ = [
     'create_example_agent',
@@ -15,4 +16,5 @@ __all__ = [
     'create_lifeos_financial_agent',
     'create_orchestrator_agent',
     'create_productivity_agent',
+    'create_investment_agent',
 ]
