@@ -146,7 +146,7 @@ def stats(
 def review(
     vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
 ):
-    """Auditoria completa da saúde do vault."""
+    """Auditoria Zettelkasten completa do vault."""
     _validate_api_key()
     reader = _get_vault(vault)
     toolkit = _get_toolkit(reader)
@@ -154,7 +154,12 @@ def review(
     from agents.reviewer import ReviewerAgent
 
     agent = ReviewerAgent(toolkit)
-    _run_agent(agent, "Faça uma auditoria completa da saúde do meu vault Obsidian.")
+    _run_agent(
+        agent,
+        "Faça uma auditoria Zettelkasten completa do meu vault. Analise fluxo de "
+        "processamento (inbox), atomicidade das permanent notes, conectividade "
+        "e cobertura de structure notes. Dê pontuação e plano de ação.",
+    )
 
 
 @app.command()
@@ -220,7 +225,7 @@ def summarize(
     vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
     moc: bool = typer.Option(False, "--moc", help="Gerar como Map of Content"),
 ):
-    """Cria resumos ou MOCs sobre um tema."""
+    """Cria Structure Notes (MOCs) sobre um tema."""
     _validate_api_key()
     reader = _get_vault(vault)
     toolkit = _get_toolkit(reader)
@@ -230,14 +235,14 @@ def summarize(
     agent = SummarizerAgent(toolkit)
     if moc:
         prompt = (
-            f"Crie um Map of Content (MOC) sobre o tema '{topic}'. "
-            "Busque todas as notas relevantes e organize um MOC pronto para ser "
-            "salvo como nota no Obsidian."
+            f"Crie uma Structure Note sobre '{topic}' para meu Zettelkasten. "
+            "Busque todas as permanent notes e literature notes relevantes. "
+            "Organize com frontmatter type: structure. Identifique lacunas."
         )
     else:
         prompt = (
-            f"Faça um resumo do conhecimento que tenho sobre '{topic}'. "
-            "Busque todas as notas relevantes e sintetize as informações principais."
+            f"Sintetize o conhecimento que tenho sobre '{topic}'. "
+            "Busque notas relevantes e crie um resumo com referências [[wiki-links]]."
         )
     _run_agent(agent, prompt)
 
@@ -259,6 +264,83 @@ def ask(
 
 
 @app.command()
+def inbox(
+    vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
+):
+    """Processa fleeting notes da inbox pelo método Zettelkasten."""
+    _validate_api_key()
+    reader = _get_vault(vault)
+    toolkit = _get_toolkit(reader)
+
+    from agents.zettel import ZettelAgent
+
+    agent = ZettelAgent(toolkit)
+    _run_agent(
+        agent,
+        "Processe minha inbox Zettelkasten. Liste as fleeting notes em inbox/, "
+        "leia cada uma, classifique (ideia → permanent note, fonte → literature note, "
+        "ação → project note, lixo → deletar) e gere as notas transformadas prontas "
+        "para salvar, com frontmatter, tags e links.",
+    )
+
+
+@app.command()
+def capture(
+    thought: str = typer.Argument(help="Pensamento, ideia ou informação para capturar"),
+    vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
+    note_type: str = typer.Option("fleeting", "--type", "-t", help="Tipo: fleeting, zettel, literature, project"),
+):
+    """Captura rápida de um pensamento no Zettelkasten."""
+    _validate_api_key()
+    reader = _get_vault(vault)
+    toolkit = _get_toolkit(reader)
+
+    from agents.capture import CaptureAgent
+
+    agent = CaptureAgent(toolkit)
+    prompt = (
+        f"Capture isso no meu Zettelkasten como {note_type} note: \"{thought}\". "
+        "Gere a nota completa com frontmatter, tags, e links para notas existentes. "
+        "Sugira o caminho e nome do arquivo."
+    )
+    _run_agent(agent, prompt)
+
+
+@app.command()
+def zettel(
+    vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
+    action: str = typer.Option("review", "--action", "-a", help="Ação: review, atomicity, setup"),
+):
+    """Manutenção do sistema Zettelkasten."""
+    _validate_api_key()
+    reader = _get_vault(vault)
+    toolkit = _get_toolkit(reader)
+
+    from agents.zettel import ZettelAgent
+
+    agent = ZettelAgent(toolkit)
+
+    prompts = {
+        "review": (
+            "Faça uma revisão completa do meu sistema Zettelkasten. "
+            "Verifique inbox, atomicidade, conexões, structure notes e tags."
+        ),
+        "atomicity": (
+            "Verifique a atomicidade das minhas permanent notes em zettel/. "
+            "Encontre notas longas ou com múltiplos assuntos e sugira divisões."
+        ),
+        "setup": (
+            "Analise meu vault e verifique se a estrutura Zettelkasten está correta. "
+            "As pastas inbox/, zettel/, references/, structure/, projects/ e archive/ existem? "
+            "Há notas fora do lugar? Sugira a reorganização necessária."
+        ),
+    }
+
+    prompt = prompts.get(action, prompts["review"])
+    _run_agent(agent, prompt)
+
+
+@app.command()
 def chat(
     vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
 ):
@@ -273,9 +355,13 @@ def chat(
     from agents.tagger import TaggerAgent
     from agents.summarizer import SummarizerAgent
     from agents.reviewer import ReviewerAgent
+    from agents.zettel import ZettelAgent
+    from agents.capture import CaptureAgent
 
     agents_map = {
         "retriever": RetrieverAgent(toolkit),
+        "zettel": ZettelAgent(toolkit),
+        "capture": CaptureAgent(toolkit),
         "organizer": OrganizerAgent(toolkit),
         "linker": LinkerAgent(toolkit),
         "tagger": TaggerAgent(toolkit),
@@ -286,9 +372,9 @@ def chat(
 
     console.print(
         Panel(
-            "[bold]Modo Chat Interativo[/]\n\n"
+            "[bold]Modo Chat Zettelkasten[/]\n\n"
             "Comandos especiais:\n"
-            "  [cyan]/agente <nome>[/]  — trocar agente (retriever, organizer, linker, tagger, summarizer, reviewer)\n"
+            "  [cyan]/agente <nome>[/]  — trocar agente\n"
             "  [cyan]/agentes[/]        — listar agentes disponíveis\n"
             "  [cyan]/sair[/]           — encerrar\n",
             title="ObsidianAI Chat",

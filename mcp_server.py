@@ -29,8 +29,11 @@ EXCLUDED = os.getenv("EXCLUDED_FOLDERS", ".obsidian,.trash,.git,_templates").spl
 mcp = FastMCP(
     "obsidian-ai",
     instructions=(
-        "Servidor MCP para gestão de conhecimento no Obsidian. "
-        "Permite ler, buscar, analisar e modificar notas do vault. "
+        "Servidor MCP para gestão de conhecimento Zettelkasten no Obsidian. "
+        "O vault segue o método Zettelkasten com pastas: inbox/ (fleeting notes), "
+        "zettel/ (permanent notes atômicas), references/ (literature notes), "
+        "structure/ (MOCs/índices), projects/ (ações ativas), archive/ (concluídos). "
+        "Permite ler, buscar, analisar, criar e modificar notas. "
         "Sempre responda em português brasileiro."
     ),
 )
@@ -66,6 +69,7 @@ def _note_summary(note) -> dict:
         "path": note.meta.path,
         "title": note.meta.title,
         "tags": note.meta.tags,
+        "type": note.meta.frontmatter.get("type", ""),
         "word_count": note.word_count,
         "links_out": len(note.outgoing_links),
         "links_in": len(note.backlinks),
@@ -282,6 +286,117 @@ def reload_vault() -> str:
 
 
 # ------------------------------------------------------------------ #
+#  Tools Zettelkasten                                                  #
+# ------------------------------------------------------------------ #
+
+
+@mcp.tool()
+def inbox_notes() -> str:
+    """Retorna fleeting notes na pasta inbox/ que precisam ser processadas."""
+    reader = _get_reader()
+    notes = [
+        n for n in reader.notes.values()
+        if n.meta.path.startswith("inbox/") or n.meta.path.startswith("inbox\\")
+    ]
+    notes.sort(key=lambda n: n.meta.modified or n.meta.created, reverse=True)
+    return json.dumps(
+        {"total": len(notes), "notes": [_note_summary(n) for n in notes]},
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+@mcp.tool()
+def notes_by_type(note_type: str) -> str:
+    """Retorna notas filtradas por tipo Zettelkasten.
+
+    Args:
+        note_type: Um de: fleeting, zettel, literature, structure, project
+    """
+    reader = _get_reader()
+    notes = [
+        n for n in reader.notes.values()
+        if n.meta.frontmatter.get("type", "").lower() == note_type.lower()
+    ]
+    return json.dumps(
+        {"type": note_type, "total": len(notes), "notes": [_note_summary(n) for n in notes]},
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+@mcp.tool()
+def notes_by_folder(folder: str) -> str:
+    """Retorna notas de uma pasta específica (ex: zettel, references, projects).
+
+    Args:
+        folder: Nome da pasta.
+    """
+    reader = _get_reader()
+    folder_clean = folder.strip("/")
+    notes = [
+        n for n in reader.notes.values()
+        if n.meta.path.startswith(folder_clean + "/")
+    ]
+    notes.sort(key=lambda n: n.meta.path)
+    return json.dumps(
+        {"folder": folder, "total": len(notes), "notes": [_note_summary(n) for n in notes]},
+        ensure_ascii=False,
+        indent=2,
+    )
+
+
+@mcp.tool()
+def find_non_atomic_notes() -> str:
+    """Encontra permanent notes longas (>500 palavras) que podem violar o princípio de atomicidade Zettelkasten."""
+    reader = _get_reader()
+    notes = [
+        n for n in reader.notes.values()
+        if n.word_count > 500
+        and (n.meta.path.startswith("zettel/") or n.meta.frontmatter.get("type") == "zettel")
+    ]
+    notes.sort(key=lambda n: n.word_count, reverse=True)
+    items = [{**_note_summary(n), "headings_count": len(n.headings)} for n in notes]
+    return json.dumps({"total": len(items), "notes": items}, ensure_ascii=False, indent=2)
+
+
+@mcp.tool()
+def setup_zettelkasten() -> str:
+    """Cria a estrutura de pastas Zettelkasten no vault (inbox, zettel, references, structure, projects, archive, templates)."""
+    writer = _get_writer()
+    created = writer.ensure_zettel_folders()
+    if created:
+        return json.dumps(
+            {"status": "ok", "created_folders": created, "message": f"Pastas criadas: {', '.join(created)}"},
+            ensure_ascii=False,
+        )
+    return json.dumps({"status": "ok", "message": "Estrutura Zettelkasten já existe"})
+
+
+@mcp.tool()
+def move_note(path: str, new_path: str) -> str:
+    """Move uma nota para outro caminho/pasta no vault.
+
+    Args:
+        path: Caminho atual da nota.
+        new_path: Novo caminho (ex: zettel/minha-ideia.md).
+    """
+    writer = _get_writer()
+    try:
+        result = writer.move_note(path, new_path)
+        global _reader
+        _reader = None
+        return json.dumps(
+            {"status": "ok", "old_path": path, "new_path": result, "message": f"Nota movida para {result}"},
+            ensure_ascii=False,
+        )
+    except FileNotFoundError:
+        return json.dumps({"error": f"Nota não encontrada: {path}"})
+    except FileExistsError:
+        return json.dumps({"error": f"Destino já existe: {new_path}"})
+
+
+# ------------------------------------------------------------------ #
 #  Tools de escrita                                                    #
 # ------------------------------------------------------------------ #
 
@@ -483,60 +598,97 @@ def resource_structure() -> str:
 
 @mcp.prompt()
 def review_vault() -> str:
-    """Auditoria completa da saúde do vault Obsidian."""
+    """Auditoria Zettelkasten completa do vault."""
     return (
-        "Faça uma auditoria completa do meu vault Obsidian. "
-        "Comece coletando as estatísticas, depois analise notas órfãs, "
-        "notas sem tags, notas vazias, possíveis duplicatas, e a estrutura de pastas. "
-        "Apresente um relatório com pontuação de saúde (0-100), problemas encontrados "
-        "organizados por severidade, e um plano de ação priorizado. "
+        "Faça uma auditoria Zettelkasten completa do meu vault. Analise: "
+        "1) Fluxo de processamento: quantas fleeting notes na inbox? Estão acumulando? "
+        "2) Atomicidade: há permanent notes longas demais ou com múltiplos assuntos? "
+        "3) Conectividade: quantas notas estão órfãs? Média de links por nota? "
+        "4) Estrutura: os temas principais têm structure notes? "
+        "5) Tags: o sistema de tags está consistente? "
+        "Dê uma pontuação de 0 a 100 com breakdown por critério e um plano de ação. "
+        "Responda em português brasileiro."
+    )
+
+
+@mcp.prompt()
+def process_inbox() -> str:
+    """Processa fleeting notes da inbox seguindo o método Zettelkasten."""
+    return (
+        "Processe minha inbox Zettelkasten. Para cada fleeting note em inbox/: "
+        "1) Leia o conteúdo "
+        "2) Classifique: é uma IDEIA (→ permanent note), FONTE (→ literature note), "
+        "AÇÃO (→ project note), ou LIXO (→ deletar)? "
+        "3) Para cada transformação, gere a nota completa com frontmatter, "
+        "tags, e links para notas existentes relacionadas "
+        "4) Sugira o caminho de destino e nome do arquivo "
         "Responda em português brasileiro."
     )
 
 
 @mcp.prompt()
 def suggest_links() -> str:
-    """Encontra conexões faltantes entre notas."""
+    """Tece conexões faltantes entre notas do Zettelkasten."""
     return (
-        "Analise meu vault Obsidian e encontre conexões faltantes entre notas. "
-        "Busque notas órfãs, leia seu conteúdo, e sugira [[wiki-links]] para conectá-las "
-        "ao restante do vault. Para cada sugestão, explique o motivo da conexão. "
+        "Analise meu Zettelkasten e encontre conexões intelectuais faltantes. "
+        "Foque em: permanent notes (zettel/) com menos de 2 links, notas órfãs, "
+        "e literature notes que deveriam linkar para permanent notes. "
+        "Para cada sugestão, explique a RELAÇÃO intelectual entre as notas. "
         "Responda em português brasileiro."
     )
 
 
 @mcp.prompt()
 def organize_tags() -> str:
-    """Analisa e melhora o sistema de tags."""
+    """Analisa e normaliza o sistema de tags Zettelkasten."""
     return (
-        "Analise o sistema de tags do meu vault Obsidian. "
-        "Identifique tags duplicadas, inconsistentes ou mal utilizadas. "
-        "Sugira tags para notas sem tags. Proponha uma taxonomia organizada. "
+        "Analise o sistema de tags do meu Zettelkasten. Verifique: "
+        "1) Toda permanent note tem ao menos 1 tag de tema? "
+        "2) Há tags duplicadas ou inconsistentes? "
+        "3) As tags seguem o padrão: tema, tema/subtema, status/X, fonte/X? "
+        "4) Há notas com tags demais (>6, possível violação de atomicidade)? "
+        "Proponha uma taxonomia consolidada. "
         "Responda em português brasileiro."
     )
 
 
 @mcp.prompt()
-def create_moc(topic: str) -> str:
-    """Cria um Map of Content (MOC) sobre um tema."""
+def create_structure_note(topic: str) -> str:
+    """Cria uma Structure Note (MOC) Zettelkasten sobre um tema."""
     return (
-        f"Crie um Map of Content (MOC) sobre '{topic}'. "
-        "Busque todas as notas relevantes no vault, leia as principais, e crie "
-        "um MOC estruturado pronto para ser salvo como nota no Obsidian. "
-        "Use [[wiki-links]] para referenciar as notas existentes. "
-        "Inclua frontmatter YAML sugerido. "
+        f"Crie uma Structure Note sobre '{topic}' para meu Zettelkasten. "
+        "Busque todas as permanent notes e literature notes relevantes. "
+        "Organize em subtemas com breves descrições ao lado de cada [[link]]. "
+        "Inclua frontmatter com type: structure. "
+        "Identifique lacunas (temas que deveriam ter notas mas não têm). "
+        "Gere a nota completa pronta para salvar em structure/. "
         "Responda em português brasileiro."
     )
 
 
 @mcp.prompt()
 def daily_review() -> str:
-    """Revisão diária do vault com sugestões de ação."""
+    """Revisão diária do Zettelkasten com foco em processamento e manutenção."""
     return (
-        "Faça uma revisão rápida do meu vault Obsidian. "
-        "Identifique: notas recentemente modificadas, notas que precisam de atenção "
-        "(sem tags, sem links, muito curtas), e sugira 3-5 ações concretas que eu "
-        "posso fazer hoje para melhorar meu vault. Seja breve e prático. "
+        "Revisão diária do meu Zettelkasten. Verifique: "
+        "1) Inbox: quantas fleeting notes para processar? "
+        "2) Notas recentes: o que foi adicionado/modificado? "
+        "3) Saúde rápida: notas sem tags, sem links, vazias? "
+        "4) Sugira 3-5 ações concretas para hoje, priorizando processar inbox. "
+        "Seja breve e prático. Responda em português brasileiro."
+    )
+
+
+@mcp.prompt()
+def capture_thought(thought: str) -> str:
+    """Captura rápida de um pensamento como fleeting note."""
+    return (
+        f"Capture este pensamento no meu Zettelkasten: \"{thought}\". "
+        "Crie uma fleeting note em inbox/ com: "
+        "1) Frontmatter apropriado (title, type: fleeting, tags inferidos) "
+        "2) Conteúdo limpo e organizado "
+        "3) Sugestão de notas existentes que podem se relacionar "
+        "Use a tool create_note para salvar. "
         "Responda em português brasileiro."
     )
 

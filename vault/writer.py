@@ -168,6 +168,38 @@ class VaultWriter:
         full_path.write_text(frontmatter.dumps(post), encoding="utf-8")
         return str(full_path.relative_to(self.vault_path))
 
+    def move_note(self, path: str, new_path: str) -> str:
+        """Move uma nota para um novo caminho (pasta/nome).
+
+        Atualiza wiki-links em outras notas não é feito automaticamente —
+        o Obsidian faz isso se estiver aberto.
+
+        Returns:
+            Novo caminho relativo.
+        """
+        full_path = self._resolve(path)
+        new_full = self.vault_path / new_path
+        if not new_full.suffix:
+            new_full = new_full.with_suffix(".md")
+        if new_full.exists():
+            raise FileExistsError(f"Destino já existe: {new_path}")
+
+        new_full.parent.mkdir(parents=True, exist_ok=True)
+        full_path.rename(new_full)
+        return str(new_full.relative_to(self.vault_path))
+
+    def ensure_zettel_folders(self) -> list[str]:
+        """Cria a estrutura de pastas Zettelkasten se não existir."""
+        folders = ["inbox", "zettel", "references", "structure", "projects", "archive", "templates"]
+        created = []
+        for folder in folders:
+            folder_path = self.vault_path / folder
+            if not folder_path.exists():
+                folder_path.mkdir(parents=True, exist_ok=True)
+                (folder_path / ".gitkeep").touch()
+                created.append(folder)
+        return created
+
     def _resolve(self, path: str) -> Path:
         full_path = self.vault_path / path
         if not full_path.exists():

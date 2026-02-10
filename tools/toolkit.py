@@ -139,6 +139,34 @@ class VaultToolkit:
             [],
             self._get_most_linked_notes,
         )
+        self._register(
+            "get_notes_by_type",
+            "Retorna notas filtradas por tipo Zettelkasten (fleeting, zettel, literature, structure, project).",
+            {"note_type": {"type": "string", "description": "Tipo: fleeting, zettel, literature, structure ou project"}},
+            ["note_type"],
+            self._get_notes_by_type,
+        )
+        self._register(
+            "get_inbox_notes",
+            "Retorna notas na pasta inbox/ (fleeting notes a processar).",
+            {},
+            [],
+            self._get_inbox_notes,
+        )
+        self._register(
+            "get_notes_by_folder",
+            "Retorna notas de uma pasta específica do vault.",
+            {"folder": {"type": "string", "description": "Nome da pasta (ex: zettel, references, projects)"}},
+            ["folder"],
+            self._get_notes_by_folder,
+        )
+        self._register(
+            "get_long_notes",
+            "Retorna permanent notes longas (>500 palavras) que podem violar atomicidade.",
+            {},
+            [],
+            self._get_long_notes,
+        )
 
     def _register(
         self,
@@ -305,12 +333,66 @@ class VaultToolkit:
             indent=2,
         )
 
+    def _get_notes_by_type(self, note_type: str) -> str:
+        notes = [
+            n for n in self.vault.notes.values()
+            if n.meta.frontmatter.get("type", "").lower() == note_type.lower()
+        ]
+        return json.dumps(
+            {"type": note_type, "total": len(notes), "notes": [_note_summary(n) for n in notes]},
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    def _get_inbox_notes(self) -> str:
+        notes = [
+            n for n in self.vault.notes.values()
+            if n.meta.path.startswith("inbox/") or n.meta.path.startswith("inbox\\")
+        ]
+        notes.sort(key=lambda n: n.meta.modified or n.meta.created, reverse=True)
+        return json.dumps(
+            {"total": len(notes), "notes": [_note_summary(n) for n in notes]},
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    def _get_notes_by_folder(self, folder: str) -> str:
+        folder_clean = folder.strip("/").strip("\\")
+        notes = [
+            n for n in self.vault.notes.values()
+            if n.meta.path.startswith(folder_clean + "/") or n.meta.path.startswith(folder_clean + "\\")
+        ]
+        notes.sort(key=lambda n: n.meta.path)
+        return json.dumps(
+            {"folder": folder, "total": len(notes), "notes": [_note_summary(n) for n in notes]},
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    def _get_long_notes(self) -> str:
+        notes = [
+            n for n in self.vault.notes.values()
+            if n.word_count > 500
+            and (n.meta.path.startswith("zettel/") or n.meta.frontmatter.get("type") == "zettel")
+        ]
+        notes.sort(key=lambda n: n.word_count, reverse=True)
+        items = [
+            {**_note_summary(n), "headings_count": len(n.headings)}
+            for n in notes
+        ]
+        return json.dumps(
+            {"total": len(items), "notes": items},
+            ensure_ascii=False,
+            indent=2,
+        )
+
 
 def _note_summary(note) -> dict:
     return {
         "path": note.meta.path,
         "title": note.meta.title,
         "tags": note.meta.tags,
+        "type": note.meta.frontmatter.get("type", ""),
         "word_count": note.word_count,
         "links_out": len(note.outgoing_links),
         "links_in": len(note.backlinks),
