@@ -26,3 +26,6 @@ logs/
 # Project specific
 knowledge/*.json
 !knowledge/.gitkeep
+data/*.json
+!data/.gitkeep
+data_test/
