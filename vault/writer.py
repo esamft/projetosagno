@@ -190,7 +190,7 @@ class VaultWriter:
 
     def ensure_zettel_folders(self) -> list[str]:
         """Cria a estrutura de pastas Zettelkasten se não existir."""
-        folders = ["inbox", "zettel", "references", "structure", "projects", "archive", "templates"]
+        folders = ["inbox", "zettel", "references", "structure", "projects", "people", "archive", "templates"]
         created = []
         for folder in folders:
             folder_path = self.vault_path / folder

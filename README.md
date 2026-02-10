@@ -17,6 +17,7 @@ vault/
   references/   -> Literature notes (resumos de fontes externas)
   structure/    -> Structure notes / MOCs (indices tematicos)
   projects/     -> Project notes (acoes e entregas ativas)
+  people/       -> Person/meeting notes (contatos, reunioes, CRM)
   archive/      -> Material concluido ou inativo
   templates/    -> Templates de notas
 ```
@@ -53,6 +54,7 @@ source: ""          # para literature notes
 | **Tagger** | `tags` | Normaliza e sugere tags seguindo taxonomia Zettelkasten |
 | **Summarizer** | `summarize` | Cria Structure Notes (MOCs) sobre temas |
 | **Retriever** | `ask` | Navega o grafo de conhecimento para responder perguntas |
+| **Ingest** | `ingest` | Processa PDFs, imagens e textos em notas Zettelkasten com aprovacao |
 
 ## Setup
 
@@ -126,6 +128,13 @@ Edite `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) 
 | `setup_zettelkasten` | Cria estrutura de pastas Zettelkasten |
 | `move_note` | Move nota entre pastas |
 
+**Ingestao (2):**
+
+| Tool | Descricao |
+|------|-----------|
+| `read_file_for_ingest` | Le arquivo externo (PDF, texto, imagem) e extrai conteudo |
+| `ingest_raw_text` | Processa texto bruto colado para ingestao |
+
 **Escrita (7):**
 
 | Tool | Descricao |
@@ -149,6 +158,8 @@ Aparecem como opcoes no Claude Desktop:
 - **create_structure_note** — Cria Structure Note sobre um tema
 - **daily_review** — Revisao diaria com foco em inbox
 - **capture_thought** — Captura rapida de um pensamento
+- **ingest_file** — Processa arquivo externo e propoe notas Zettelkasten
+- **ingest_text** — Processa texto colado e propoe notas Zettelkasten
 
 ---
 
@@ -159,6 +170,19 @@ Aparecem como opcoes no Claude Desktop:
 ```bash
 python main.py capture "Python generators sao lazy iterators"
 python main.py capture "Ler livro Atomic Habits" --type project
+```
+
+### Ingerir dados brutos
+
+```bash
+# Ingerir um PDF (decompoem em notas atomicas)
+python main.py ingest ~/Downloads/artigo-cientifico.pdf
+
+# Ingerir texto bruto
+python main.py ingest "Reuniao com Joao: discutimos arquitetura de microservicos..." --raw
+
+# Ingerir com nome da fonte
+python main.py ingest "Notas do livro cap 5..." --raw --source-name "Atomic Habits - Cap 5"
 ```
 
 ### Processar inbox
@@ -232,20 +256,22 @@ No chat: `/agentes` lista todos, `/agente zettel` troca agente, `/sair` encerra.
 ## Arquitetura
 
 ```
-mcp_server.py            # MCP Server (FastMCP) — 28 tools, 7 prompts
-main.py                  # CLI (typer + rich) — 11 comandos
+mcp_server.py            # MCP Server (FastMCP) — 30 tools, 9 prompts
+main.py                  # CLI (typer + rich) — 12 comandos
 config/settings.py       # Configuracoes via .env
 vault/
   models.py              # Note, NoteMeta, VaultStats (Pydantic)
   parser.py              # Frontmatter, wiki-links, tags, Dataview
   reader.py              # Leitor com indices, busca, backlinks
   writer.py              # Cria, modifica, move notas
+  ingest.py              # Extrator de conteudo (PDF, imagem, texto)
 tools/
-  toolkit.py             # 19 tools para agentes CLI
+  toolkit.py             # 21 tools para agentes CLI
 agents/
   base.py                # Loop de tool-use (Anthropic API)
   zettel.py              # Especialista Zettelkasten
   capture.py             # Captura rapida
+  ingest.py              # Ingestao de dados brutos com validacao
   organizer.py           # Organizacao estrutural
   linker.py              # Conexoes entre notas
   tagger.py              # Taxonomia de tags

@@ -6,6 +6,7 @@ import json
 from typing import Any, Callable
 
 from vault.reader import VaultReader
+from vault.ingest import extract_from_file, extract_from_raw_text
 
 
 class VaultToolkit:
@@ -166,6 +167,23 @@ class VaultToolkit:
             {},
             [],
             self._get_long_notes,
+        )
+        self._register(
+            "read_file_for_ingest",
+            "Lê um arquivo externo (PDF, texto, etc.) e extrai seu conteúdo para ingestão no Zettelkasten.",
+            {"file_path": {"type": "string", "description": "Caminho absoluto do arquivo a ser lido"}},
+            ["file_path"],
+            self._read_file_for_ingest,
+        )
+        self._register(
+            "ingest_raw_text",
+            "Recebe texto bruto colado pelo usuário e o prepara para ingestão no Zettelkasten.",
+            {
+                "text": {"type": "string", "description": "Texto bruto para ingestão"},
+                "source": {"type": "string", "description": "Fonte do texto (opcional, ex: 'reunião 2024-01-15')"},
+            },
+            ["text"],
+            self._ingest_raw_text,
         )
 
     def _register(
@@ -385,6 +403,22 @@ class VaultToolkit:
             ensure_ascii=False,
             indent=2,
         )
+
+    def _read_file_for_ingest(self, file_path: str) -> str:
+        try:
+            result = extract_from_file(file_path)
+            # Remove image base64 data from tool result (too large for context)
+            if result.get("image_data"):
+                result["image_data"] = {"note": "Dados base64 omitidos do resultado. Imagem disponível no arquivo original."}
+            return json.dumps(result, ensure_ascii=False, indent=2)
+        except FileNotFoundError:
+            return json.dumps({"error": f"Arquivo não encontrado: {file_path}"})
+        except ImportError as e:
+            return json.dumps({"error": str(e)})
+
+    def _ingest_raw_text(self, text: str, source: str = "") -> str:
+        result = extract_from_raw_text(text, source)
+        return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 def _note_summary(note) -> dict:

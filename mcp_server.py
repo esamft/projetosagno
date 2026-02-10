@@ -18,6 +18,7 @@ load_dotenv()
 
 from vault.reader import VaultReader
 from vault.writer import VaultWriter
+from vault.ingest import extract_from_file, extract_from_raw_text
 
 # ------------------------------------------------------------------ #
 #  Inicialização                                                       #
@@ -569,6 +570,41 @@ def update_frontmatter(path: str, fields_json: str) -> str:
 
 
 # ------------------------------------------------------------------ #
+#  Tools de ingestão                                                   #
+# ------------------------------------------------------------------ #
+
+
+@mcp.tool()
+def read_file_for_ingest(file_path: str) -> str:
+    """Lê um arquivo externo (PDF, texto, imagem) e extrai seu conteúdo para ingestão no Zettelkasten.
+
+    Args:
+        file_path: Caminho absoluto do arquivo a ser lido.
+    """
+    try:
+        result = extract_from_file(file_path)
+        if result.get("image_data"):
+            result["image_data"] = {"note": "Dados base64 omitidos. Use o caminho original para referência."}
+        return json.dumps(result, ensure_ascii=False, indent=2)
+    except FileNotFoundError:
+        return json.dumps({"error": f"Arquivo não encontrado: {file_path}"})
+    except ImportError as e:
+        return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+def ingest_raw_text(text: str, source: str = "") -> str:
+    """Recebe texto bruto colado pelo usuário e o prepara para ingestão no Zettelkasten.
+
+    Args:
+        text: Texto bruto para processar.
+        source: Fonte do texto (opcional, ex: "reunião 2024-01-15", "artigo X").
+    """
+    result = extract_from_raw_text(text, source)
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+# ------------------------------------------------------------------ #
 #  Resources                                                           #
 # ------------------------------------------------------------------ #
 
@@ -689,6 +725,37 @@ def capture_thought(thought: str) -> str:
         "2) Conteúdo limpo e organizado "
         "3) Sugestão de notas existentes que podem se relacionar "
         "Use a tool create_note para salvar. "
+        "Responda em português brasileiro."
+    )
+
+
+@mcp.prompt()
+def ingest_file(file_path: str) -> str:
+    """Processa um arquivo externo (PDF, texto, imagem) e propõe notas Zettelkasten."""
+    return (
+        f"Ingira o arquivo '{file_path}' no meu Zettelkasten. "
+        "Use read_file_for_ingest para extrair o conteúdo, depois: "
+        "1) Analise e identifique os temas e ideias distintas "
+        "2) Decomponha em notas atômicas Zettelkasten (1 ideia = 1 nota) "
+        "3) Classifique cada nota (zettel, literature, project, person) "
+        "4) Busque conexões com notas existentes no vault "
+        "5) Apresente um PLANO DE INGESTÃO com cada nota proposta "
+        "6) Pergunte se devo criar as notas "
+        "Responda em português brasileiro."
+    )
+
+
+@mcp.prompt()
+def ingest_text(text: str) -> str:
+    """Processa texto colado e propõe notas Zettelkasten."""
+    return (
+        f"Ingira este texto no meu Zettelkasten:\n\n\"{text}\"\n\n"
+        "1) Analise e identifique temas e ideias distintas "
+        "2) Decomponha em notas atômicas (1 ideia = 1 nota) "
+        "3) Classifique cada nota (zettel, literature, project, person) "
+        "4) Busque conexões com notas existentes no vault "
+        "5) Apresente um PLANO DE INGESTÃO completo "
+        "6) Pergunte se devo criar as notas "
         "Responda em português brasileiro."
     )
 

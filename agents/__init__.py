@@ -7,3 +7,4 @@ from .reviewer import ReviewerAgent
 from .retriever import RetrieverAgent
 from .zettel import ZettelAgent
 from .capture import CaptureAgent
+from .ingest import IngestAgent

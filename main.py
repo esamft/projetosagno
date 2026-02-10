@@ -307,6 +307,75 @@ def capture(
 
 
 @app.command()
+def ingest(
+    source: str = typer.Argument(help="Caminho do arquivo (PDF, texto, imagem) OU texto entre aspas para ingerir"),
+    vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
+    raw: bool = typer.Option(False, "--raw", "-r", help="Tratar source como texto bruto em vez de caminho de arquivo"),
+    source_name: str = typer.Option("", "--source-name", "-s", help="Nome da fonte (para texto bruto)"),
+):
+    """Ingere dados brutos (PDF, imagem, texto) e propõe notas Zettelkasten para aprovação."""
+    _validate_api_key()
+    reader = _get_vault(vault)
+    toolkit = _get_toolkit(reader)
+
+    from vault.ingest import extract_from_file, extract_from_raw_text
+    from agents.ingest import IngestAgent
+
+    # Extrair conteúdo da fonte
+    if raw:
+        extracted = extract_from_raw_text(source, source_name)
+    else:
+        source_path = Path(source).expanduser().resolve()
+        if not source_path.exists():
+            console.print(f"[bold red]Arquivo não encontrado:[/] {source}")
+            raise typer.Exit(1)
+        console.print(f"[dim]Lendo arquivo: {source_path}[/]")
+        try:
+            extracted = extract_from_file(str(source_path))
+        except ImportError as e:
+            console.print(f"[bold red]Dependência faltando:[/] {e}")
+            raise typer.Exit(1)
+
+    content_type = extracted["type"]
+    content = extracted["content"]
+    metadata = extracted.get("metadata", {})
+
+    console.print(f"[dim]Tipo detectado: {content_type}[/]")
+    if content_type == "pdf":
+        console.print(f"[dim]Páginas: {metadata.get('pages', '?')}[/]")
+    elif content_type == "image":
+        console.print(f"[dim]Imagem: {metadata.get('media_type', '?')} ({metadata.get('size_bytes', 0)} bytes)[/]")
+    console.print(f"[dim]Conteúdo: {len(content)} caracteres[/]\n")
+
+    if content_type == "image":
+        prompt = (
+            f"Recebi uma imagem ({metadata.get('file', 'desconhecido')}). "
+            "Não consigo ver a imagem diretamente, mas o usuário pode descrevê-la. "
+            "Com base no nome e contexto, sugira que tipo de notas podem ser criadas. "
+            "Pergunte ao usuário para descrever o conteúdo da imagem."
+        )
+    elif not content.strip():
+        console.print("[yellow]Aviso: Nenhum conteúdo textual extraído do arquivo.[/]")
+        console.print("[dim]Se é um PDF escaneado, considere usar OCR primeiro.[/]")
+        raise typer.Exit(0)
+    else:
+        # Truncar se muito longo para o prompt
+        display_content = content[:5000] + "\n\n[... truncado ...]" if len(content) > 5000 else content
+        prompt = (
+            f"Recebi o seguinte conteúdo para ingestão no meu Zettelkasten.\n\n"
+            f"**Fonte:** {metadata.get('file', metadata.get('source', 'texto direto'))}\n"
+            f"**Tipo:** {content_type}\n\n"
+            f"**Conteúdo:**\n\n{display_content}\n\n"
+            "Analise este conteúdo e crie um plano de ingestão completo. "
+            "Decomponha em notas atômicas, classifique cada uma, busque conexões "
+            "com o vault existente e apresente o plano para minha aprovação."
+        )
+
+    agent = IngestAgent(toolkit)
+    _run_agent(agent, prompt)
+
+
+@app.command()
 def zettel(
     vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
     action: str = typer.Option("review", "--action", "-a", help="Ação: review, atomicity, setup"),
@@ -357,11 +426,13 @@ def chat(
     from agents.reviewer import ReviewerAgent
     from agents.zettel import ZettelAgent
     from agents.capture import CaptureAgent
+    from agents.ingest import IngestAgent
 
     agents_map = {
         "retriever": RetrieverAgent(toolkit),
         "zettel": ZettelAgent(toolkit),
         "capture": CaptureAgent(toolkit),
+        "ingest": IngestAgent(toolkit),
         "organizer": OrganizerAgent(toolkit),
         "linker": LinkerAgent(toolkit),
         "tagger": TaggerAgent(toolkit),
