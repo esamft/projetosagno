@@ -4,7 +4,7 @@ Sistema de gestao de conhecimento pessoal baseado no metodo **Zettelkasten** com
 
 Dois modos de uso:
 - **MCP Server** — conecta ao Claude Desktop / Claude Code para usar direto no chat
-- **CLI** — interface no terminal com 8 agentes especializados
+- **CLI** — interface no terminal com 10 agentes especializados
 
 ## Metodo Zettelkasten
 
@@ -55,6 +55,7 @@ source: ""          # para literature notes
 | **Summarizer** | `summarize` | Cria Structure Notes (MOCs) sobre temas |
 | **Retriever** | `ask` | Navega o grafo de conhecimento para responder perguntas |
 | **Ingest** | `ingest` | Processa PDFs, imagens e textos em notas Zettelkasten com aprovacao |
+| **Scout** | `scout` | Busca novidades na web sobre seus temas e propoe notas |
 
 ## Setup
 
@@ -128,6 +129,14 @@ Edite `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) 
 | `setup_zettelkasten` | Cria estrutura de pastas Zettelkasten |
 | `move_note` | Move nota entre pastas |
 
+**Busca Web (3):**
+
+| Tool | Descricao |
+|------|-----------|
+| `web_search_news` | Busca noticias recentes na web sobre um tema |
+| `web_search_general` | Busca geral na web (artigos, blogs, docs) |
+| `web_fetch_article` | Extrai conteudo principal de uma URL |
+
 **Ingestao (2):**
 
 | Tool | Descricao |
@@ -158,6 +167,7 @@ Aparecem como opcoes no Claude Desktop:
 - **create_structure_note** — Cria Structure Note sobre um tema
 - **daily_review** — Revisao diaria com foco em inbox
 - **capture_thought** — Captura rapida de um pensamento
+- **scout_news** — Busca novidades na web sobre um tema e propoe notas
 - **ingest_file** — Processa arquivo externo e propoe notas Zettelkasten
 - **ingest_text** — Processa texto colado e propoe notas Zettelkasten
 
@@ -170,6 +180,16 @@ Aparecem como opcoes no Claude Desktop:
 ```bash
 python main.py capture "Python generators sao lazy iterators"
 python main.py capture "Ler livro Atomic Habits" --type project
+```
+
+### Buscar novidades na web (Scout)
+
+```bash
+# Buscar novidades sobre um tema
+python main.py scout "inteligencia artificial"
+
+# Buscar apenas noticias recentes
+python main.py scout "Python 3.13" --news
 ```
 
 ### Ingerir dados brutos
@@ -256,8 +276,8 @@ No chat: `/agentes` lista todos, `/agente zettel` troca agente, `/sair` encerra.
 ## Arquitetura
 
 ```
-mcp_server.py            # MCP Server (FastMCP) — 30 tools, 9 prompts
-main.py                  # CLI (typer + rich) — 12 comandos
+mcp_server.py            # MCP Server (FastMCP) — 33 tools, 10 prompts
+main.py                  # CLI (typer + rich) — 13 comandos
 config/settings.py       # Configuracoes via .env
 vault/
   models.py              # Note, NoteMeta, VaultStats (Pydantic)
@@ -265,13 +285,15 @@ vault/
   reader.py              # Leitor com indices, busca, backlinks
   writer.py              # Cria, modifica, move notas
   ingest.py              # Extrator de conteudo (PDF, imagem, texto)
+  web.py                 # Busca web (DuckDuckGo) e extracao de artigos
 tools/
-  toolkit.py             # 21 tools para agentes CLI
+  toolkit.py             # 24 tools para agentes CLI
 agents/
   base.py                # Loop de tool-use (Anthropic API)
   zettel.py              # Especialista Zettelkasten
   capture.py             # Captura rapida
   ingest.py              # Ingestao de dados brutos com validacao
+  scout.py               # Busca novidades na web e atomiza
   organizer.py           # Organizacao estrutural
   linker.py              # Conexoes entre notas
   tagger.py              # Taxonomia de tags

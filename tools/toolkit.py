@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from vault.reader import VaultReader
 from vault.ingest import extract_from_file, extract_from_raw_text
+from vault.web import search_news, search_web, fetch_article, format_search_results, format_article
 
 
 class VaultToolkit:
@@ -184,6 +185,35 @@ class VaultToolkit:
             },
             ["text"],
             self._ingest_raw_text,
+        )
+        self._register(
+            "web_search_news",
+            "Busca notícias recentes na web sobre um tema. Retorna título, URL, snippet e fonte.",
+            {
+                "query": {"type": "string", "description": "Termo de busca para notícias"},
+                "max_results": {"type": "integer", "description": "Máximo de resultados (padrão 10)"},
+            },
+            ["query"],
+            self._web_search_news,
+        )
+        self._register(
+            "web_search_general",
+            "Busca geral na web sobre um tema. Retorna título, URL, snippet e fonte.",
+            {
+                "query": {"type": "string", "description": "Termo de busca"},
+                "max_results": {"type": "integer", "description": "Máximo de resultados (padrão 10)"},
+            },
+            ["query"],
+            self._web_search_general,
+        )
+        self._register(
+            "web_fetch_article",
+            "Acessa uma URL e extrai o conteúdo principal do artigo/página como texto limpo.",
+            {
+                "url": {"type": "string", "description": "URL do artigo para extrair conteúdo"},
+            },
+            ["url"],
+            self._web_fetch_article,
         )
 
     def _register(
@@ -419,6 +449,78 @@ class VaultToolkit:
     def _ingest_raw_text(self, text: str, source: str = "") -> str:
         result = extract_from_raw_text(text, source)
         return json.dumps(result, ensure_ascii=False, indent=2)
+
+    def _web_search_news(self, query: str, max_results: int = 10) -> str:
+        try:
+            results = search_news(query, max_results=max_results)
+            return json.dumps(
+                {
+                    "query": query,
+                    "total": len(results),
+                    "results": [
+                        {
+                            "title": r.title,
+                            "url": r.url,
+                            "snippet": r.snippet,
+                            "source": r.source,
+                            "date": r.date,
+                        }
+                        for r in results
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        except ImportError as e:
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            return json.dumps({"error": f"Erro na busca: {e}"})
+
+    def _web_search_general(self, query: str, max_results: int = 10) -> str:
+        try:
+            results = search_web(query, max_results=max_results)
+            return json.dumps(
+                {
+                    "query": query,
+                    "total": len(results),
+                    "results": [
+                        {
+                            "title": r.title,
+                            "url": r.url,
+                            "snippet": r.snippet,
+                            "source": r.source,
+                        }
+                        for r in results
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        except ImportError as e:
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            return json.dumps({"error": f"Erro na busca: {e}"})
+
+    def _web_fetch_article(self, url: str) -> str:
+        try:
+            article = fetch_article(url)
+            return json.dumps(
+                {
+                    "url": article.url,
+                    "title": article.title,
+                    "source": article.source,
+                    "author": article.author,
+                    "date": article.date,
+                    "word_count": article.word_count,
+                    "excerpt": article.excerpt,
+                    "content": article.content[:8000] if len(article.content) > 8000 else article.content,
+                    "truncated": len(article.content) > 8000,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        except Exception as e:
+            return json.dumps({"error": f"Erro ao extrair artigo: {e}"})
 
 
 def _note_summary(note) -> dict:

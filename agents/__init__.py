@@ -8,3 +8,4 @@ from .retriever import RetrieverAgent
 from .zettel import ZettelAgent
 from .capture import CaptureAgent
 from .ingest import IngestAgent
+from .scout import ScoutAgent

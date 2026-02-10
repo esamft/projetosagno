@@ -376,6 +376,39 @@ def ingest(
 
 
 @app.command()
+def scout(
+    topic: str = typer.Argument(help="Tema para buscar novidades na web"),
+    vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
+    news_only: bool = typer.Option(False, "--news", "-n", help="Buscar apenas notícias (mais recentes)"),
+):
+    """Busca novidades na web sobre um tema e propõe notas Zettelkasten."""
+    _validate_api_key()
+    reader = _get_vault(vault)
+    toolkit = _get_toolkit(reader)
+
+    from agents.scout import ScoutAgent
+
+    agent = ScoutAgent(toolkit)
+
+    if news_only:
+        prompt = (
+            f"Busque as NOTÍCIAS mais recentes sobre '{topic}'. "
+            "Foque apenas em novidades das últimas semanas. "
+            "Verifique o que já tenho no vault, busque na web, extraia os melhores artigos, "
+            "e proponha notas Zettelkasten para minha aprovação."
+        )
+    else:
+        prompt = (
+            f"Busque novidades e conteúdo relevante sobre '{topic}'. "
+            "Verifique o que já tenho no vault sobre esse tema, "
+            "busque notícias E artigos de fundo na web, "
+            "extraia os mais relevantes, e proponha notas Zettelkasten para minha aprovação."
+        )
+
+    _run_agent(agent, prompt)
+
+
+@app.command()
 def zettel(
     vault: Optional[str] = typer.Option(None, "--vault", "-v", help="Caminho do vault"),
     action: str = typer.Option("review", "--action", "-a", help="Ação: review, atomicity, setup"),
@@ -427,12 +460,14 @@ def chat(
     from agents.zettel import ZettelAgent
     from agents.capture import CaptureAgent
     from agents.ingest import IngestAgent
+    from agents.scout import ScoutAgent
 
     agents_map = {
         "retriever": RetrieverAgent(toolkit),
         "zettel": ZettelAgent(toolkit),
         "capture": CaptureAgent(toolkit),
         "ingest": IngestAgent(toolkit),
+        "scout": ScoutAgent(toolkit),
         "organizer": OrganizerAgent(toolkit),
         "linker": LinkerAgent(toolkit),
         "tagger": TaggerAgent(toolkit),

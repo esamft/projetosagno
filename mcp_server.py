@@ -19,6 +19,7 @@ load_dotenv()
 from vault.reader import VaultReader
 from vault.writer import VaultWriter
 from vault.ingest import extract_from_file, extract_from_raw_text
+from vault.web import search_news, search_web, fetch_article
 
 # ------------------------------------------------------------------ #
 #  Inicialização                                                       #
@@ -570,6 +571,95 @@ def update_frontmatter(path: str, fields_json: str) -> str:
 
 
 # ------------------------------------------------------------------ #
+#  Tools de busca web                                                  #
+# ------------------------------------------------------------------ #
+
+
+@mcp.tool()
+def web_search_news(query: str, max_results: int = 10) -> str:
+    """Busca notícias recentes na web sobre um tema. Retorna título, URL, snippet, fonte e data.
+
+    Args:
+        query: Termo de busca para notícias.
+        max_results: Máximo de resultados (padrão 10).
+    """
+    try:
+        results = search_news(query, max_results=max_results)
+        return json.dumps(
+            {
+                "query": query,
+                "total": len(results),
+                "results": [
+                    {"title": r.title, "url": r.url, "snippet": r.snippet, "source": r.source, "date": r.date}
+                    for r in results
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    except ImportError as e:
+        return json.dumps({"error": str(e)})
+    except Exception as e:
+        return json.dumps({"error": f"Erro na busca: {e}"})
+
+
+@mcp.tool()
+def web_search_general(query: str, max_results: int = 10) -> str:
+    """Busca geral na web sobre um tema. Retorna título, URL, snippet e fonte.
+
+    Args:
+        query: Termo de busca.
+        max_results: Máximo de resultados (padrão 10).
+    """
+    try:
+        results = search_web(query, max_results=max_results)
+        return json.dumps(
+            {
+                "query": query,
+                "total": len(results),
+                "results": [
+                    {"title": r.title, "url": r.url, "snippet": r.snippet, "source": r.source}
+                    for r in results
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    except ImportError as e:
+        return json.dumps({"error": str(e)})
+    except Exception as e:
+        return json.dumps({"error": f"Erro na busca: {e}"})
+
+
+@mcp.tool()
+def web_fetch_article(url: str) -> str:
+    """Acessa uma URL e extrai o conteúdo principal do artigo/página como texto limpo.
+
+    Args:
+        url: URL do artigo para extrair conteúdo.
+    """
+    try:
+        article = fetch_article(url)
+        return json.dumps(
+            {
+                "url": article.url,
+                "title": article.title,
+                "source": article.source,
+                "author": article.author,
+                "date": article.date,
+                "word_count": article.word_count,
+                "excerpt": article.excerpt,
+                "content": article.content[:8000] if len(article.content) > 8000 else article.content,
+                "truncated": len(article.content) > 8000,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    except Exception as e:
+        return json.dumps({"error": f"Erro ao extrair artigo: {e}"})
+
+
+# ------------------------------------------------------------------ #
 #  Tools de ingestão                                                   #
 # ------------------------------------------------------------------ #
 
@@ -725,6 +815,21 @@ def capture_thought(thought: str) -> str:
         "2) Conteúdo limpo e organizado "
         "3) Sugestão de notas existentes que podem se relacionar "
         "Use a tool create_note para salvar. "
+        "Responda em português brasileiro."
+    )
+
+
+@mcp.prompt()
+def scout_news(topic: str) -> str:
+    """Busca novidades na web sobre um tema e propõe notas Zettelkasten."""
+    return (
+        f"Busque novidades na web sobre '{topic}' para meu Zettelkasten. "
+        "1) Primeiro verifique o que já existe no vault sobre o tema "
+        "2) Busque notícias recentes e artigos relevantes usando web_search_news e web_search_general "
+        "3) Extraia o conteúdo dos artigos mais relevantes com web_fetch_article "
+        "4) Decomponha em notas atômicas: 1 literature note por fonte + N permanent notes por ideia nova "
+        "5) Busque conexões com notas existentes "
+        "6) Apresente um relatório completo e pergunte se devo criar as notas "
         "Responda em português brasileiro."
     )
 
