@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM de Relacionamentos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <h1>Relacionamentos</h1>
+      <p>CRM Pessoal Inteligente</p>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-page="contacts" onclick="showPage('contacts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Contatos
+      </button>
+      <button class="nav-item" data-page="scores" onclick="showPage('scores')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Scores
+      </button>
+      <button class="nav-item" data-page="network" onclick="showPage('network')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><line x1="8" y1="8" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="8"/><line x1="8" y1="16" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="16"/></svg>
+        Rede
+      </button>
+      <button class="nav-item" data-page="chat" onclick="showPage('chat')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Assistente IA
+      </button>
+      <button class="nav-item" data-page="settings" onclick="showPage('settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Perfil
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="profile-badge" id="sidebarProfile">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div>
+          <div style="font-weight:600" id="profileName">Configurar perfil</div>
+          <div style="font-size:11px;color:var(--text-muted)" id="profileType">--</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- ============ DASHBOARD ============ -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Visao geral dos seus relacionamentos</p>
+      </div>
+
+      <div class="metrics-grid" id="dashMetrics">
+        <div class="metric-card"><div class="metric-label">Contatos</div><div class="metric-value" id="mContatos">--</div><div class="metric-sub">ativos</div></div>
+        <div class="metric-card"><div class="metric-label">Interacoes</div><div class="metric-value" id="mInteracoes">--</div><div class="metric-sub">registradas</div></div>
+        <div class="metric-card"><div class="metric-label">Score Medio</div><div class="metric-value" id="mScore">--</div><div class="metric-sub">de 100</div></div>
+        <div class="metric-card"><div class="metric-label">Atencao</div><div class="metric-value" id="mAlertas" style="color:var(--orange)">--</div><div class="metric-sub">precisam de contato</div></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Sugestoes de Comunicacao</span>
+          </div>
+          <div id="dashSuggestions">
+            <div class="empty-state"><p>Carregando...</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Atividade Recente</span>
+          </div>
+          <div id="dashActivity">
+            <div class="empty-state"><p>Carregando...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Saude dos Relacionamentos</span>
+        </div>
+        <div class="table-wrapper" id="dashScoresTable">
+          <div class="empty-state"><p>Carregando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONTACTS ============ -->
+    <div class="page hidden" id="page-contacts">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2>Contatos</h2>
+          <p>Gerencie sua rede de relacionamentos</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addContact')">+ Novo Contato</button>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px">
+        <input class="form-input" placeholder="Buscar por nome..." id="searchName" oninput="searchContacts()" style="max-width:300px">
+        <select class="form-select" id="searchCategory" onchange="searchContacts()" style="max-width:200px">
+          <option value="">Todas categorias</option>
+          <option value="familia">Familia</option>
+          <option value="amigo_proximo">Amigo proximo</option>
+          <option value="colega_trabalho">Colega de trabalho</option>
+          <option value="cliente">Cliente</option>
+          <option value="fornecedor">Fornecedor</option>
+          <option value="parceiro">Parceiro</option>
+          <option value="mentor">Mentor</option>
+          <option value="mentorado">Mentorado</option>
+          <option value="networking">Networking</option>
+          <option value="governo">Governo</option>
+          <option value="investidor">Investidor</option>
+          <option value="paciente">Paciente</option>
+          <option value="referencia_medica">Ref. Medica</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div class="table-wrapper" id="contactsTable">
+          <div class="empty-state"><p>Carregando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONTACT DETAIL ============ -->
+    <div class="page hidden" id="page-contact-detail">
+      <div style="margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('contacts')">&larr; Voltar</button>
+      </div>
+      <div id="contactDetailContent">
+        <div class="empty-state"><p>Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- ============ SCORES ============ -->
+    <div class="page hidden" id="page-scores">
+      <div class="page-header">
+        <h2>Scores de Relacionamento</h2>
+        <p>Saude e tendencia de cada vinculo</p>
+      </div>
+      <div class="card">
+        <div class="table-wrapper" id="scoresFullTable">
+          <div class="empty-state"><p>Carregando...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ NETWORK ============ -->
+    <div class="page hidden" id="page-network">
+      <div class="page-header">
+        <h2>Analise da Rede</h2>
+        <p>Estrutura, gaps e insights da sua rede de contatos</p>
+      </div>
+
+      <div class="metrics-grid" id="netMetrics"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Distribuicao por Categoria</span></div>
+          <div id="netCategories"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Gaps Identificados</span></div>
+          <div id="netGaps"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Insights</span></div>
+        <div id="netInsights"></div>
+      </div>
+    </div>
+
+    <!-- ============ CHAT ============ -->
+    <div class="page hidden" id="page-chat">
+      <div class="page-header">
+        <h2>Assistente IA</h2>
+        <p>Converse com os agentes especializados do CRM</p>
+      </div>
+
+      <div class="agent-tabs" id="agentTabs">
+        <button class="agent-tab active" data-agent="advisor" onclick="selectAgent('advisor', this)">Consultor de Prioridades</button>
+        <button class="agent-tab" data-agent="analyst" onclick="selectAgent('analyst', this)">Analista</button>
+        <button class="agent-tab" data-agent="strategist" onclick="selectAgent('strategist', this)">Estrategista</button>
+        <button class="agent-tab" data-agent="mapper" onclick="selectAgent('mapper', this)">Mapeador</button>
+      </div>
+
+      <div class="card chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg chat-msg-agent">
+            Ola! Sou o <strong>Consultor de Prioridades</strong> do seu CRM. Posso ajudar a gerenciar seus contatos, analisar relacionamentos, dar sugestoes de comunicacao e muito mais.<br><br>
+            Experimente perguntar:<br>
+            &bull; "Com quem devo falar essa semana?"<br>
+            &bull; "Como estao meus relacionamentos?"<br>
+            &bull; "Adicione o contato Maria Silva, cliente da empresa X"
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <input type="text" id="chatInput" placeholder="Digite sua mensagem..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary" onclick="sendChat()">Enviar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SETTINGS ============ -->
+    <div class="page hidden" id="page-settings">
+      <div class="page-header">
+        <h2>Perfil</h2>
+        <p>Configure seu perfil para personalizar o CRM</p>
+      </div>
+
+      <div class="card" style="max-width:600px">
+        <div class="form-group">
+          <label class="form-label">Seu nome</label>
+          <input class="form-input" id="settingsName" placeholder="Seu nome completo">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de perfil</label>
+          <select class="form-select" id="settingsType">
+            <option value="empresario">Empresario</option>
+            <option value="diretor">Diretor / Executivo</option>
+            <option value="servidor_publico">Servidor Publico</option>
+            <option value="saude">Profissional de Saude</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group" id="settingsProfileInfo"></div>
+        <button class="btn btn-primary" onclick="saveProfile()">Salvar Perfil</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- Add Contact Modal -->
+<div class="modal-overlay" id="modal-addContact">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Novo Contato</h3>
+      <button class="modal-close" onclick="closeModal('addContact')">&times;</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nome *</label>
+        <input class="form-input" id="newName" placeholder="Nome completo">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-select" id="newCategory">
+          <option value="outro">Outro</option>
+          <option value="familia">Familia</option>
+          <option value="amigo_proximo">Amigo proximo</option>
+          <option value="colega_trabalho">Colega de trabalho</option>
+          <option value="cliente">Cliente</option>
+          <option value="fornecedor">Fornecedor</option>
+          <option value="parceiro">Parceiro</option>
+          <option value="mentor">Mentor</option>
+          <option value="mentorado">Mentorado</option>
+          <option value="networking">Networking</option>
+          <option value="governo">Governo</option>
+          <option value="investidor">Investidor</option>
+          <option value="paciente">Paciente</option>
+          <option value="referencia_medica">Ref. Medica</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="newEmail" placeholder="email@exemplo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telefone</label>
+        <input class="form-input" id="newPhone" placeholder="(11) 99999-9999">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Empresa</label>
+        <input class="form-input" id="newCompany" placeholder="Empresa / Organizacao">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cargo</label>
+        <input class="form-input" id="newRole" placeholder="Cargo / Funcao">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cidade</label>
+        <input class="form-input" id="newCity" placeholder="Cidade">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aniversario</label>
+        <input class="form-input" id="newBirthday" type="date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Como conheceu</label>
+      <input class="form-input" id="newHowMet" placeholder="Como voce conheceu essa pessoa">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <textarea class="form-textarea" id="newNotes" placeholder="Notas pessoais..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addContact')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitNewContact()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Interaction Modal -->
+<div class="modal-overlay" id="modal-addInteraction">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Registrar Interacao</h3>
+      <button class="modal-close" onclick="closeModal('addInteraction')">&times;</button>
+    </div>
+    <input type="hidden" id="intContactId">
+    <div class="form-group">
+      <label class="form-label">Contato</label>
+      <div id="intContactName" style="font-weight:600;padding:8px 0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo *</label>
+        <select class="form-select" id="intType">
+          <option value="mensagem">Mensagem</option>
+          <option value="ligacao">Ligacao</option>
+          <option value="reuniao">Reuniao</option>
+          <option value="email">Email</option>
+          <option value="encontro_presencial">Encontro presencial</option>
+          <option value="rede_social">Rede social</option>
+          <option value="evento">Evento</option>
+          <option value="favor_feito">Favor feito</option>
+          <option value="favor_recebido">Favor recebido</option>
+          <option value="indicacao">Indicacao</option>
+          <option value="presente">Presente</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sentimento</label>
+        <select class="form-select" id="intSentiment">
+          <option value="positivo">Positivo</option>
+          <option value="neutro" selected>Neutro</option>
+          <option value="negativo">Negativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descricao *</label>
+      <textarea class="form-textarea" id="intDesc" placeholder="O que aconteceu?"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Local</label>
+        <input class="form-input" id="intLocal" placeholder="Onde aconteceu">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duracao (min)</label>
+        <input class="form-input" id="intDuration" type="number" placeholder="30">
+      </div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+        <input type="checkbox" id="intFollowUp"> Precisa de follow-up
+      </label>
+    </div>
+    <div class="form-group hidden" id="intFollowUpGroup">
+      <label class="form-label">Descricao do follow-up</label>
+      <input class="form-input" id="intFollowUpDesc" placeholder="O que fazer no follow-up">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addInteraction')">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitInteraction()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
