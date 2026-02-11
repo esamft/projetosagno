@@ -2,7 +2,8 @@
 
 Sistema de gestao de conhecimento pessoal baseado no metodo **Zettelkasten** com agentes IA integrados ao **Obsidian**. Organiza o que voce ja sabe, o que precisa saber e o que precisa fazer.
 
-Dois modos de uso:
+Tres modos de uso:
+- **Telegram Bot** — conversa direto no WhatsApp/Telegram com todos os agentes
 - **MCP Server** — conecta ao Claude Desktop / Claude Code para usar direto no chat
 - **CLI** — interface no terminal com 10 agentes especializados
 
@@ -72,9 +73,65 @@ cp .env.example .env
 # Via CLI: python main.py zettel --action setup
 ```
 
+### Variaveis .env
+
+```
+OBSIDIAN_VAULT_PATH=/caminho/do/seu/vault
+ANTHROPIC_API_KEY=sk-ant-...
+LLM_MODEL=claude-sonnet-4-5-20250929
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...      # para o bot Telegram
+TELEGRAM_ALLOWED_USERS=123456789           # IDs permitidos (virgula separados, vazio = sem restricao)
+```
+
 ---
 
-## MCP Server (recomendado)
+## Telegram Bot
+
+O bot Telegram permite interagir com todos os agentes pelo celular. Envie textos, PDFs, fotos e comandos.
+
+### Como criar o bot
+
+1. Abra o Telegram e converse com [@BotFather](https://t.me/BotFather)
+2. Envie `/newbot` e siga as instrucoes
+3. Copie o token e coloque no `.env` como `TELEGRAM_BOT_TOKEN`
+4. (Opcional) Coloque seu Telegram user ID em `TELEGRAM_ALLOWED_USERS` para restringir acesso
+
+### Iniciar o bot
+
+```bash
+python main.py bot
+```
+
+### Comandos Telegram
+
+| Comando | O que faz |
+|---------|-----------|
+| `/scout tema` | Busca novidades na web e propoe notas |
+| `/capture texto` | Captura rapida de pensamento |
+| `/ask pergunta` | Pergunta sobre suas notas |
+| `/inbox` | Processa fleeting notes |
+| `/review` | Auditoria do vault |
+| `/stats` | Estatisticas (sem IA) |
+| `/agente nome` | Troca agente ativo |
+| `/agentes` | Lista agentes disponiveis |
+| `/reload` | Recarrega vault |
+
+### Envio de arquivos
+
+- **PDF** → automaticamente enviado ao Ingest Agent, que decompoe em notas atomicas
+- **Foto** → recebida pelo Ingest Agent (descreva o conteudo para ele processar)
+- **Texto livre** → vai para o agente ativo (padrao: retriever)
+
+### Fluxo de aprovacao
+
+Quando o Scout ou Ingest propoe notas, o bot exibe botoes:
+- **Aprovar** → cria todas as notas propostas no vault
+- **Alterar** → descreva o que mudar e o agente reapresenta
+- **Rejeitar** → descarta a proposta
+
+---
+
+## MCP Server
 
 O MCP Server expoe o vault como tools para o Claude usar diretamente.
 
@@ -277,8 +334,10 @@ No chat: `/agentes` lista todos, `/agente zettel` troca agente, `/sair` encerra.
 
 ```
 mcp_server.py            # MCP Server (FastMCP) — 33 tools, 10 prompts
-main.py                  # CLI (typer + rich) — 13 comandos
+main.py                  # CLI (typer + rich) — 14 comandos
 config/settings.py       # Configuracoes via .env
+bot/
+  telegram_bot.py        # Bot Telegram com todos os agentes
 vault/
   models.py              # Note, NoteMeta, VaultStats (Pydantic)
   parser.py              # Frontmatter, wiki-links, tags, Dataview
@@ -287,9 +346,9 @@ vault/
   ingest.py              # Extrator de conteudo (PDF, imagem, texto)
   web.py                 # Busca web (DuckDuckGo) e extracao de artigos
 tools/
-  toolkit.py             # 24 tools para agentes CLI
+  toolkit.py             # 24 tools leitura + 3 escrita para agentes
 agents/
-  base.py                # Loop de tool-use (Anthropic API)
+  base.py                # Loop de tool-use (Anthropic API) com continue_run
   zettel.py              # Especialista Zettelkasten
   capture.py             # Captura rapida
   ingest.py              # Ingestao de dados brutos com validacao

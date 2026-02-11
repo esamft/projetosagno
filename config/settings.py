@@ -20,6 +20,8 @@ class Settings:
         ).split(",")
         self.NOTE_EXTENSIONS = [".md"]
         self.LANGUAGE = os.getenv("LANGUAGE", "pt-br")
+        self.TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        self.TELEGRAM_ALLOWED_USERS = os.getenv("TELEGRAM_ALLOWED_USERS", "")
 
     def validate(self):
         errors = []

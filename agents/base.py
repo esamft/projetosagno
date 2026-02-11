@@ -43,6 +43,19 @@ class BaseAgent:
         """
         self.messages = [{"role": "user", "content": user_message}]
         self._tool_calls_log.clear()
+        return self._loop(on_tool_call)
+
+    def continue_run(self, user_message: str, on_tool_call: Callable | None = None) -> str:
+        """Continua a conversa mantendo o histórico anterior.
+
+        Usado para fluxos de aprovação: o agente propõe, o usuário aprova,
+        e o agente continua de onde parou.
+        """
+        self.messages.append({"role": "user", "content": user_message})
+        return self._loop(on_tool_call)
+
+    def _loop(self, on_tool_call: Callable | None = None) -> str:
+        """Loop interno de tool-use."""
 
         for _ in range(20):  # limite de iterações de segurança
             response = self.client.messages.create(

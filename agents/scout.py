@@ -23,6 +23,8 @@ class ScoutAgent(BaseAgent):
         "get_notes_by_type",
         "get_most_linked_notes",
         "get_folder_structure",
+        "create_note",
+        "insert_link_in_note",
     ]
 
     system_prompt = """\

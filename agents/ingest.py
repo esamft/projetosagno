@@ -19,6 +19,8 @@ class IngestAgent(BaseAgent):
         "get_notes_by_tag",
         "get_folder_structure",
         "get_most_linked_notes",
+        "create_note",
+        "insert_link_in_note",
     ]
 
     system_prompt = """\

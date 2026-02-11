@@ -6,6 +6,7 @@ import json
 from typing import Any, Callable
 
 from vault.reader import VaultReader
+from vault.writer import VaultWriter
 from vault.ingest import extract_from_file, extract_from_raw_text
 from vault.web import search_news, search_web, fetch_article, format_search_results, format_article
 
@@ -13,8 +14,9 @@ from vault.web import search_news, search_web, fetch_article, format_search_resu
 class VaultToolkit:
     """Registro central de tools. Cada agente seleciona as que precisa."""
 
-    def __init__(self, vault: VaultReader):
+    def __init__(self, vault: VaultReader, writer: VaultWriter | None = None):
         self.vault = vault
+        self.writer = writer
         self._registry: dict[str, dict[str, Any]] = {}
         self._register_all()
 
@@ -22,7 +24,9 @@ class VaultToolkit:
         schemas = []
         handlers: dict[str, Callable] = {}
         for name in names:
-            entry = self._registry[name]
+            entry = self._registry.get(name)
+            if entry is None:
+                continue  # tool opcional (ex: write tools sem writer)
             schemas.append(entry["schema"])
             handlers[name] = entry["handler"]
         return schemas, handlers
@@ -215,6 +219,41 @@ class VaultToolkit:
             ["url"],
             self._web_fetch_article,
         )
+
+        # ---- Write tools (requerem writer) ----
+        if self.writer:
+            self._register(
+                "create_note",
+                "Cria uma nova nota no vault com frontmatter. Cria pastas se necessário.",
+                {
+                    "path": {"type": "string", "description": "Caminho relativo (ex: zettel/minha-ideia.md)"},
+                    "content": {"type": "string", "description": "Conteúdo markdown da nota"},
+                    "title": {"type": "string", "description": "Título da nota (opcional)"},
+                    "tags": {"type": "string", "description": "Tags separadas por vírgula (opcional)"},
+                },
+                ["path", "content"],
+                self._create_note,
+            )
+            self._register(
+                "append_to_note",
+                "Adiciona conteúdo ao final de uma nota existente.",
+                {
+                    "path": {"type": "string", "description": "Caminho relativo da nota"},
+                    "content": {"type": "string", "description": "Conteúdo a adicionar"},
+                },
+                ["path", "content"],
+                self._append_to_note,
+            )
+            self._register(
+                "insert_link_in_note",
+                "Insere um [[wiki-link]] em uma nota.",
+                {
+                    "path": {"type": "string", "description": "Caminho da nota"},
+                    "target": {"type": "string", "description": "Nome da nota alvo para o link"},
+                },
+                ["path", "target"],
+                self._insert_link,
+            )
 
     def _register(
         self,
@@ -521,6 +560,32 @@ class VaultToolkit:
             )
         except Exception as e:
             return json.dumps({"error": f"Erro ao extrair artigo: {e}"})
+
+    # ---- Write handlers ---- #
+
+    def _create_note(self, path: str, content: str, title: str = "", tags: str = "") -> str:
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else None
+        try:
+            created = self.writer.create_note(path=path, content=content, title=title or None, tags=tag_list)
+            return json.dumps({"status": "ok", "path": created, "message": f"Nota criada: {created}"}, ensure_ascii=False)
+        except FileExistsError:
+            return json.dumps({"error": f"Nota já existe: {path}"})
+        except Exception as e:
+            return json.dumps({"error": str(e)})
+
+    def _append_to_note(self, path: str, content: str) -> str:
+        try:
+            updated = self.writer.append_to_note(path, content)
+            return json.dumps({"status": "ok", "path": updated}, ensure_ascii=False)
+        except FileNotFoundError:
+            return json.dumps({"error": f"Nota não encontrada: {path}"})
+
+    def _insert_link(self, path: str, target: str) -> str:
+        try:
+            result = self.writer.insert_link(path, target)
+            return json.dumps({"status": "ok", "message": result}, ensure_ascii=False)
+        except FileNotFoundError:
+            return json.dumps({"error": f"Nota não encontrada: {path}"})
 
 
 def _note_summary(note) -> dict:

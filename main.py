@@ -538,5 +538,32 @@ def chat(
             console.print(f"[bold red]Erro:[/] {e}\n")
 
 
+@app.command()
+def bot(
+    token: Optional[str] = typer.Option(None, "--token", "-t", help="Telegram Bot Token (ou TELEGRAM_BOT_TOKEN no .env)"),
+):
+    """Inicia o bot Telegram para interagir com o Zettelkasten."""
+    _validate_api_key()
+
+    from bot.telegram_bot import run_bot
+
+    console.print(
+        Panel(
+            "[bold]ObsidianAI — Bot Telegram[/]\n\n"
+            "Iniciando bot... Ctrl+C para parar.",
+            title="Telegram",
+            border_style="cyan",
+        )
+    )
+
+    try:
+        run_bot(token)
+    except RuntimeError as e:
+        console.print(f"[bold red]Erro:[/] {e}")
+        raise typer.Exit(1)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Bot encerrado.[/]")
+
+
 if __name__ == "__main__":
     app()
